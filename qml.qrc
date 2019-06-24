@@ -1,5 +1,11 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>assets/needle.png</file>
+        <file>assets/gauge.png</file>
+        <file>assets/font.png</file>
+        <file>assets/DejaVuSansMono-Bold.ttf</file>
+        <file>assets/DejaVuSansMono.ttf</file>
+        <file>assets/background.png</file>
     </qresource>
 </RCC>
