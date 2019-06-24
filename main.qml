@@ -6,21 +6,26 @@ import QtQuick.Controls.Styles 1.4
 Window {
     id: root
     visible: true
+
     //visibility: Window.FullScreen
-    width: 1920
-    height: 720
+    width: 1920; height: 720
+
+    property var baseDegrees: 45
+    property var totalDegrees: 270
 
     property var speed: 30
     property var needle_x: 360
-    property var needle_y: 150
-    property var degrees: 36
+    property var needle_y: 45
+
+    property var rpmMaximum: 8000
     property var rpm: 0
+    property var degrees: (totalDegrees / rpmMaximum) * rpm
+    property var oldDegrees: 0
 
     property bool isAccelerating: false
     property bool isDecelerating: false
 
     FontLoader { id: monoBoldFont; source: "assets/DejaVuSansMono-Bold.ttf" }
-
 
     Image {
         anchors.fill: parent
@@ -28,8 +33,7 @@ Window {
     }
 
     Image {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.centerIn: parent
         source: "assets/gauge.png"
     }
 
@@ -60,19 +64,39 @@ Window {
         }
     }
 
-    /* 90x300 */
-    /*
-      rpm: 0    -> 36 degrees
-      rpm: 1000 -> 72 degrees
-      rpm: 4000 -> 180 degrees
-    */
-    Image {
-        id: needle
-        source: "assets/needle.png"
-        transform: Rotation {
-            origin.x: root.needle_x
-            origin.y: root.needle_y
-            angle: root.degrees
+    //Item {
+    Rectangle {
+        id: needleContainer
+        anchors.centerIn: parent
+
+        /* the size of gauge */
+        width: 620; height: 620
+
+        rotation: root.baseDegrees + root.degrees
+
+        opacity: calculateOpacity() 
+
+        function calculateOpacity() {
+            if(root.rpm >= 6500)
+              return 0.8
+            return 0.5
+        }
+
+
+        property var rotateSpeed: 8000 / 270
+
+        Behavior on rotation {
+            NumberAnimation {
+                duration: rotateSpeed
+            }
+        }
+
+        Image {
+            id: needle
+            source: "assets/needle.png"
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 10
         }
     }
 
@@ -83,27 +107,26 @@ Window {
         Keys.onPressed: {
             if(event.key == Qt.Key_Up) {
                 root.isAccelerating = true
-                root.rpm += 10
-                console.log(root.rpm)
+
+                root.oldDegrees = (totalDegrees / rpmMaximum) * root.rpm
+
+                if(root.rpm + 100 >= root.rpmMaximum)
+                    root.rpm = root.rpmMaximum
+                else
+                    root.rpm += 100
 
                 event.accepted = true
+                calculateSpeed()
             }
             else if(event.key == Qt.Key_Down) {
                 root.isDecelerating = true
 
-                root.rpm -= 10
-                console.log(root.rpm)
-
+                if(root.rpm - 10 <= 0)
+                    root.rpm = 0
+                else
+                    root.rpm -= 10
 
                 event.accepted = true
-            }
-            else if(event.key == Qt.Key_Left) {
-                root.needle_x += 1
-                console.log(root.needle_x)
-            }
-            else if(event.key == Qt.Key_Right) {
-                root.needle_y += 1
-                console.log(root.needle_y)
             }
         }
 
@@ -122,16 +145,21 @@ Window {
         }
     }
 
+    function calculateSpeed() {
+        if(root.rpm >= root.rpmMaximum)
+            root.speed = 200
+        else if(root.rpm <= 0)
+            root.speed = 0
+        else
+            root.speed += 1
+    }
+
     onIsAcceleratingChanged: {
         console.log(root.isAccelerating)
     }
 
     onIsDeceleratingChanged: {
         console.log(root.isDecelerating)
-    }
-
-    onSpeedChanged: {
-        console.log(root.speed)
     }
 
     Component.onCompleted: {
