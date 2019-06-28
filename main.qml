@@ -7,25 +7,33 @@ Window {
     id: root
     visible: true
 
-    //visibility: Window.FullScreen
     width: 1920; height: 720
 
-    property var baseDegrees: 45
-    property var totalDegrees: 270
+    /* Fixed the window size */
+    maximumHeight: height
+    maximumWidth: width
+    minimumHeight: height
+    minimumWidth: width
 
-    property var speed: 30
-    property var needle_x: 360
-    property var needle_y: 45
+    property var maximumSpeed: 200
+    property var speed: 0
 
     property var rpmMaximum: 8000
     property var rpm: 0
-    property var degrees: (totalDegrees / rpmMaximum) * rpm
-    property var oldDegrees: 0
+
+    /* the mininum rotation degree of the needle */
+    property var baseDegrees: 45
+
+    property var maximumDegrees: 270
+
+    /* the rotation degree of the needle */
+    property var degrees: (maximumDegrees / rpmMaximum) * rpm
 
     property bool isAccelerating: false
     property bool isDecelerating: false
 
     FontLoader { id: monoBoldFont; source: "assets/DejaVuSansMono-Bold.ttf" }
+
 
     Image {
         anchors.fill: parent
@@ -37,6 +45,7 @@ Window {
         source: "assets/gauge.png"
     }
 
+    /* the speed text and the unit text */
     Item {
         anchors {
             verticalCenter: parent.verticalCenter
@@ -47,7 +56,10 @@ Window {
             id: speed
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.verticalCenter
-            text: root.speed
+
+            /* float to int */
+            text: root.speed | 0
+
             font.family: monoBoldFont.name
             font.pointSize: 60
             color: "white"
@@ -81,23 +93,26 @@ Window {
             }
         }
 
+        /* the green needle */
         Image {
             id: needle
             visible: !needle_red.visible
             source: "assets/needle.png"
+
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 10
         }
 
+        /* the red needle */
         Image {
             id: needle_red
             visible: isRedNeedleVisible()
             source: "assets/needle_red.png"
+
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 10
-
 
             function isRedNeedleVisible() {
                 if(root.rpm >= 6500)
@@ -114,25 +129,10 @@ Window {
         Keys.onPressed: {
             if(event.key == Qt.Key_Up) {
                 root.isAccelerating = true
-
-                root.oldDegrees = (totalDegrees / rpmMaximum) * root.rpm
-
-                if(root.rpm + 100 >= root.rpmMaximum)
-                    root.rpm = root.rpmMaximum
-                else
-                    root.rpm += 100
-
                 event.accepted = true
-                calculateSpeed()
             }
             else if(event.key == Qt.Key_Down) {
                 root.isDecelerating = true
-
-                if(root.rpm - 10 <= 0)
-                    root.rpm = 0
-                else
-                    root.rpm -= 10
-
                 event.accepted = true
             }
         }
@@ -152,23 +152,62 @@ Window {
         }
     }
 
-    function calculateSpeed() {
-        if(root.rpm >= root.rpmMaximum)
+    Timer {
+        id: timer
+
+        /* 0.01 seconds */
+        interval: 10
+        repeat: true
+        running: true
+        triggeredOnStart: true
+
+        onTriggered: {
+            var accel = 0
+            if(root.isAccelerating) {
+                if(root.rpm + 30 >= root.rpmMaximum)
+                    root.rpm = root.rpmMaximum
+                else
+                    root.rpm += 30
+
+                accel = 0.8
+            }
+
+            if(root.isDecelerating) {
+                if(root.rpm - 30 <= 0)
+                    root.rpm = 0
+                else
+                    root.rpm -= 30
+
+                accel = -0.8
+            }
+
+            calculateSpeed(accel)
+        }
+    }
+
+    function calculateSpeed(accel) {
+        if(root.rpm >= root.rpmMaximum) {
             root.speed = 200
-        else if(root.rpm <= 0)
+            return
+        }
+        else if(root.rpm <= 0) {
             root.speed = 0
-        else
-            root.speed += 1
+            return
+        }
+
+        if(root.speed + accel >= root.maximumSpeed) {
+            root.speed = 200
+            return
+        }
+        if(root.speed + accel <= 0) {
+            root.speed = 0
+            return
+        }
+
+        root.speed += accel
     }
 
-    onIsAcceleratingChanged: {
-        console.log(root.isAccelerating)
-    }
-
-    onIsDeceleratingChanged: {
-        console.log(root.isDecelerating)
-    }
-
+    /* set the initial value */
     Component.onCompleted: {
         root.speed = 0
         root.rpm = 0
