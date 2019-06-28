@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>assets/needle.png</file>
+        <file>assets/needle_red.png</file>
         <file>assets/gauge.png</file>
         <file>assets/font.png</file>
         <file>assets/DejaVuSansMono-Bold.ttf</file>

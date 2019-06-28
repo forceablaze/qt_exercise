@@ -64,8 +64,7 @@ Window {
         }
     }
 
-    //Item {
-    Rectangle {
+    Item {
         id: needleContainer
         anchors.centerIn: parent
 
@@ -74,29 +73,37 @@ Window {
 
         rotation: root.baseDegrees + root.degrees
 
-        opacity: calculateOpacity() 
-
-        function calculateOpacity() {
-            if(root.rpm >= 6500)
-              return 0.8
-            return 0.5
-        }
-
-
         property var rotateSpeed: 8000 / 270
 
         Behavior on rotation {
             NumberAnimation {
-                duration: rotateSpeed
+                duration: needleContainer.rotateSpeed
             }
         }
 
         Image {
             id: needle
+            visible: !needle_red.visible
             source: "assets/needle.png"
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 10
+        }
+
+        Image {
+            id: needle_red
+            visible: isRedNeedleVisible()
+            source: "assets/needle_red.png"
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 10
+
+
+            function isRedNeedleVisible() {
+                if(root.rpm >= 6500)
+                  return true
+                return false
+            }
         }
     }
 
