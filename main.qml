@@ -26,8 +26,13 @@ Window {
 
     property var maximumDegrees: 270
 
+
     /* the rotation degree of the needle */
     property var degrees: (maximumDegrees / rpmMaximum) * rpm
+
+    property var diffRPM: 30
+    property var diffDegrees: (maximumDegrees / rpmMaximum) * diffRPM
+    property var baseDurationSpeed: 8000 / 270
 
     property bool isAccelerating: false
     property bool isDecelerating: false
@@ -83,14 +88,12 @@ Window {
         /* the size of gauge */
         width: 620; height: 620
 
-        rotation: root.baseDegrees + root.degrees
-
-        property var rotateSpeed: 8000 / 270
-
-        Behavior on rotation {
-            NumberAnimation {
-                duration: needleContainer.rotateSpeed
-            }
+        NumberAnimation {
+            id: needleAnimation
+            target: needleContainer
+            properties: "rotation"
+            duration: baseDurationSpeed * diffDegrees
+            to: root.baseDegrees + root.degrees
         }
 
         /* the green needle */
@@ -164,19 +167,26 @@ Window {
         onTriggered: {
             var accel = 0
             if(root.isAccelerating) {
-                if(root.rpm + 30 >= root.rpmMaximum)
+                var oldDegree = root.degrees
+
+                if(root.rpm + diffRPM >= root.rpmMaximum)
                     root.rpm = root.rpmMaximum
                 else
-                    root.rpm += 30
+                    root.rpm += diffRPM
+
+                needleAnimation.start()
 
                 accel = 0.8
             }
 
             if(root.isDecelerating) {
-                if(root.rpm - 30 <= 0)
+                var oldDegree = root.degrees
+                if(root.rpm - diffRPM <= 0)
                     root.rpm = 0
                 else
-                    root.rpm -= 30
+                    root.rpm -= diffRPM
+
+                needleAnimation.start()
 
                 accel = -0.8
             }
@@ -207,9 +217,11 @@ Window {
         root.speed += accel
     }
 
+
     /* set the initial value */
     Component.onCompleted: {
         root.speed = 0
         root.rpm = 0
+        needleContainer.rotation = root.baseDegrees
     }
 }
