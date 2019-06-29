@@ -1,7 +1,5 @@
 import QtQuick 2.9
 import QtQuick.Window 2.2
-import QtQuick.Controls 1.4
-import QtQuick.Controls.Styles 1.4
 
 Window {
     id: root
@@ -167,7 +165,6 @@ Window {
         onTriggered: {
             var accel = 0
             if(root.isAccelerating) {
-                var oldDegree = root.degrees
 
                 if(root.rpm + diffRPM >= root.rpmMaximum)
                     root.rpm = root.rpmMaximum
@@ -180,7 +177,6 @@ Window {
             }
 
             if(root.isDecelerating) {
-                var oldDegree = root.degrees
                 if(root.rpm - diffRPM <= 0)
                     root.rpm = 0
                 else
